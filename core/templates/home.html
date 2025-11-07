@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calendar with Sidebar — Bootstrap 5 + FullCalendar</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap Icons (optional) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <!-- FullCalendar CSS (v6.1.11) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* theme variables (light default) */
+      :root {
+        --bg: #f5f7fa;
+        --card-bg: #ffffff;
+        --text: #111827;
+        --muted: #6c757d;
+        --border: #e6eaef;
+        --shadow: 0 6px 14px rgba(19, 24, 31, 0.04);
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .calendar-card {
+        border-radius: 12px;
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+
+      .sidebar {
+        background: var(--card-bg);
+        border-right: 1px solid var(--border);
+        min-height: 100vh;
+        padding: 1rem;
+      }
+
+      .small-muted {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      /* dark theme overrides */
+      .theme-dark {
+        --bg: #0b1220;
+        --card-bg: #0f1724;
+        --text: #e6eef8;
+        --muted: #9aa6b2;
+        --border: #12202b;
+        --shadow: none;
+      }
+
+      /* Slight Google-Calendar-like styling */
+      body {
+        background: #f5f7fa;
+      }
+      .app-shell {
+        min-height: 100vh;
+      }
+      .sidebar {
+        background: #fff;
+        border-right: 1px solid #e6eaef;
+        min-height: 100vh;
+        padding: 1rem;
+      }
+      .calendar-wrap {
+        padding: 1rem;
+      }
+      .fc .fc-toolbar-title {
+        font-weight: 600;
+      }
+      .calendar-card {
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 6px 14px rgba(19, 24, 31, 0.04);
+        padding: 16px;
+      }
+      .calendar-list .form-check {
+        margin-bottom: 0.5rem;
+      }
+      .nav-brand {
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+      @media (max-width: 991px) {
+        .sidebar {
+          position: relative;
+          min-height: unset;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+      <div class="container-fluid">
+        <a
+          class="navbar-brand nav-brand d-flex align-items-center gap-2"
+          href="#"
+        >
+          <span class="badge bg-primary rounded-pill">G</span>
+          <span>My Calendar</span>
+        </a>
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#topNav"
+          aria-controls="topNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="topNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-3">
+            <li class="nav-item">
+              <a class="nav-link active" href="#">Calendar</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Tasks</a>
+            </li>
+          </ul>
+
+          <form class="d-flex me-3" role="search">
+            <input
+              class="form-control form-control-sm"
+              type="search"
+              placeholder="Search"
+              aria-label="Search"
+            />
+          </form>
+
+          <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-outline-secondary btn-sm">Settings</button>
+
+            <!-- THEME TOGGLE BUTTON -->
+            <button
+              id="themeToggle"
+              class="btn btn-outline-secondary btn-sm"
+              title="Toggle theme"
+              type="button"
+            >
+              <i id="themeIcon" class="bi theme-toggle-icon bi-moon"></i>
+            </button>
+
+            <div class="dropdown">
+              <a
+                class="btn btn-primary btn-sm dropdown-toggle"
+                href="#"
+                role="button"
+                id="accountDrop"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="bi bi-person-circle"></i> Me
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="accountDrop"
+              >
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><a class="dropdown-item" href="#">Sign out</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- APP SHELL -->
+    <div class="container-fluid app-shell">
+      <div class="row g-0">
+        <!-- SIDEBAR -->
+        <aside class="col-lg-3 sidebar d-lg-block">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">My calendars</h6>
+            <button class="btn btn-sm btn-outline-primary" id="btnAddCalendar">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+
+          <div class="calendar-card mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <strong>Personal</strong>
+                <div class="small-muted">Events and reminders</div>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" id="newEventBtn">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+            </div>
+
+            <hr />
+
+            <div class="calendar-list">
+              <!-- Checkbox list will control eventSources -->
+              <div class="form-check">
+                <input
+                  class="form-check-input cal-toggle"
+                  type="checkbox"
+                  value="personal"
+                  id="cal_personal"
+                  checked
+                />
+                <label class="form-check-label" for="cal_personal"
+                  >Personal</label
+                >
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input cal-toggle"
+                  type="checkbox"
+                  value="work"
+                  id="cal_work"
+                  checked
+                />
+                <label class="form-check-label" for="cal_work">Work</label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input cal-toggle"
+                  type="checkbox"
+                  value="holidays"
+                  id="cal_holidays"
+                  checked
+                />
+                <label class="form-check-label" for="cal_holidays"
+                  >Holidays</label
+                >
+              </div>
+            </div>
+
+            <hr />
+
+            <div class="small-muted">Quick actions</div>
+            <div class="d-grid gap-2 mt-2">
+              <button class="btn btn-outline-primary btn-sm" id="btnToday">
+                <i class="bi bi-calendar-day me-1"></i> Today
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" id="btnPrev">
+                <i class="bi bi-chevron-left"></i> Prev
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" id="btnNext">
+                Next <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="small-muted">Labels</div>
+          <div class="mt-2">
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <span class="badge bg-info rounded-pill">&nbsp;&nbsp;</span>
+              <span>Meetings</span>
+            </div>
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <span class="badge bg-success rounded-pill">&nbsp;&nbsp;</span>
+              <span>Personal</span>
+            </div>
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <span class="badge bg-warning rounded-pill">&nbsp;&nbsp;</span>
+              <span>Holiday</span>
+            </div>
+          </div>
+
+          <!-- New: Weather card -->
+          <div
+            class="calendar-card mt-3"
+            id="weatherCard"
+            style="min-height: 110px"
+          >
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>Weather</strong>
+              <small id="weatherLocation" class="small-muted"
+                >Delhi (default)</small
+              >
+            </div>
+            <div id="weatherContent">
+              <div id="weatherDate" class="small-muted mb-1">—</div>
+              <div id="weatherDesc" class="mb-1">
+                Click a date to see forecast
+              </div>
+              <div id="weatherTemp" class="small-muted"></div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN CALENDAR -->
+        <main class="col-lg-9 calendar-wrap">
+          <div class="calendar-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex gap-2 align-items-center">
+                <div>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    id="btnPrevTop"
+                  >
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    id="btnTodayTop"
+                  >
+                    Today
+                  </button>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    id="btnNextTop"
+                  >
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </div>
+
+                <div class="ms-3">
+                  <div id="currentTitle" class="h5 mb-0"></div>
+                  <div class="small-muted" id="currentRange"></div>
+                </div>
+              </div>
+
+              <div class="btn-group" role="group" aria-label="View selectors">
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm view-btn active"
+                  data-view="dayGridMonth"
+                >
+                  Month
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm view-btn"
+                  data-view="timeGridWeek"
+                >
+                  Week
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm view-btn"
+                  data-view="timeGridDay"
+                >
+                  Day
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm view-btn"
+                  data-view="listWeek"
+                >
+                  List
+                </button>
+              </div>
+            </div>
+
+            <div id="calendar"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Event Modal (create/view) -->
+    <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="eventForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">Event</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="evt_id" />
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input class="form-control" id="evt_title" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Calendar</label>
+              <select id="evt_calendar" class="form-select">
+                <option value="personal">Personal</option>
+                <option value="work">Work</option>
+                <option value="holidays">Holidays</option>
+              </select>
+            </div>
+
+            <div class="mb-3 row">
+              <div class="col">
+                <label class="form-label">Start</label>
+                <input
+                  type="datetime-local"
+                  id="evt_start"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="col">
+                <label class="form-label">End</label>
+                <input
+                  type="datetime-local"
+                  id="evt_end"
+                  class="form-control"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-check mt-2">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="evt_all_day"
+              />
+              <label class="form-check-label" for="evt_all_day">All day</label>
+            </div>
+
+            <div class="mt-2">
+              <label class="form-label">Description</label>
+              <textarea id="evt_desc" class="form-control" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              id="deleteEventBtn"
+              class="btn btn-danger me-auto"
+              style="display: none"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- FullCalendar script (user-provided) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+    <!-- Bootstrap 5 JS (popper included) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      // ---------- Theme handling (new) ----------
+      (function () {
+        const THEME_KEY = "pcode_theme"; // localStorage key
+        const rootEl = document.documentElement;
+        const themeToggle = () => document.getElementById("themeToggle");
+        const themeIcon = () => document.getElementById("themeIcon");
+
+        function applyTheme(mode) {
+          if (mode === "dark") {
+            rootEl.classList.add("theme-dark");
+            // update icon to sun
+            if (themeIcon()) {
+              themeIcon().classList.remove("bi-moon");
+              themeIcon().classList.add("bi-sun");
+            }
+          } else {
+            rootEl.classList.remove("theme-dark");
+            if (themeIcon()) {
+              themeIcon().classList.remove("bi-sun");
+              themeIcon().classList.add("bi-moon");
+            }
+          }
+        }
+
+        function getStoredTheme() {
+          try {
+            return localStorage.getItem(THEME_KEY);
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function storeTheme(mode) {
+          try {
+            localStorage.setItem(THEME_KEY, mode);
+          } catch (e) {}
+        }
+
+        function detectPreferred() {
+          if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+          ) {
+            return "dark";
+          }
+          return "light";
+        }
+
+        // init on DOM ready (this script is inside DOMContentLoaded script too, but safe to run)
+        document.addEventListener("DOMContentLoaded", function () {
+          const btn = themeToggle();
+          if (!btn) return;
+          const stored = getStoredTheme();
+          const initial = stored || detectPreferred();
+          applyTheme(initial);
+
+          btn.addEventListener("click", function () {
+            const current = rootEl.classList.contains("theme-dark")
+              ? "dark"
+              : "light";
+            const next = current === "dark" ? "light" : "dark";
+            applyTheme(next);
+            storeTheme(next);
+          });
+        });
+      })();
+
+      // ---------- Sample event sources (separate calendars) ----------
+      const personalEvents = [
+        {
+          id: "p1",
+          title: "Dentist",
+          start: new Date().toISOString().slice(0, 10) + "T10:00:00",
+          end: new Date().toISOString().slice(0, 10) + "T11:00:00",
+          extendedProps: { calendar: "personal" },
+          classNames: ["cal-personal"],
+        },
+        {
+          id: "p2",
+          title: "Gym",
+          start:
+            new Date(new Date().setDate(new Date().getDate() + 2))
+              .toISOString()
+              .slice(0, 10) + "T18:00:00",
+          extendedProps: { calendar: "personal" },
+          classNames: ["cal-personal"],
+        },
+      ];
+
+      const workEvents = [
+        {
+          id: "w1",
+          title: "Sprint Planning",
+          start:
+            new Date(new Date().setDate(new Date().getDate() - 3))
+              .toISOString()
+              .slice(0, 10) + "T09:00:00",
+          end:
+            new Date(new Date().setDate(new Date().getDate() - 3))
+              .toISOString()
+              .slice(0, 10) + "T10:30:00",
+          extendedProps: { calendar: "work" },
+          classNames: ["cal-work"],
+        },
+        {
+          id: "w2",
+          title: "Client Call",
+          start: new Date().toISOString().slice(0, 10) + "T15:00:00",
+          extendedProps: { calendar: "work" },
+          classNames: ["cal-work"],
+        },
+      ];
+
+      // Replace static holidayEvents with async function
+      async function fetchIndianHolidays(year) {
+        try {
+          const response = await fetch(
+            `https://date.nager.at/api/v3/PublicHolidays/${year}/IN`
+          );
+          if (!response.ok) throw new Error("Failed to fetch holidays");
+
+          const holidays = await response.json();
+          return holidays.map((holiday) => ({
+            id: `holiday_${holiday.date}_${holiday.name.replace(/\s+/g, "_")}`,
+            title: holiday.name,
+            start: holiday.date,
+            allDay: true,
+            extendedProps: {
+              calendar: "holidays",
+              type: "indian_holiday",
+              localName: holiday.localName,
+              description: `${holiday.localName} - ${holiday.name}`,
+            },
+            classNames: ["cal-holidays"],
+            color: "#ffc107",
+          }));
+        } catch (error) {
+          console.error("Error fetching Indian holidays:", error);
+          return [];
+        }
+      }
+
+      // references to event sources
+      const sources = {
+        personal: {
+          id: "src_personal",
+          events: personalEvents,
+          color: "#0d6efd",
+        },
+        work: {
+          id: "src_work",
+          events: workEvents,
+          color: "#198754",
+        },
+        holidays: {
+          id: "src_holidays",
+          events: [], // Will be populated from API
+          color: "#ffc107",
+        },
+      };
+
+      // ---------- Weather settings & helpers (added) ----------
+      const DEFAULT_LAT = 28.7041;
+      const DEFAULT_LON = 77.1025;
+      function weatherCodeToText(code) {
+        // Basic mapping from Open-Meteo weathercode to description
+        const map = {
+          0: "Clear sky",
+          1: "Mainly clear",
+          2: "Partly cloudy",
+          3: "Overcast",
+          45: "Fog",
+          48: "Depositing rime fog",
+          51: "Light drizzle",
+          53: "Moderate drizzle",
+          55: "Dense drizzle",
+          56: "Light freezing drizzle",
+          57: "Dense freezing drizzle",
+          61: "Slight rain",
+          63: "Moderate rain",
+          65: "Heavy rain",
+          66: "Light freezing rain",
+          67: "Heavy freezing rain",
+          71: "Slight snow fall",
+          73: "Moderate snow fall",
+          75: "Heavy snow fall",
+          77: "Snow grains",
+          80: "Slight rain showers",
+          81: "Moderate rain showers",
+          82: "Violent rain showers",
+          85: "Slight snow showers",
+          86: "Heavy snow showers",
+          95: "Thunderstorm",
+          96: "Thunderstorm with slight hail",
+          99: "Thunderstorm with heavy hail",
+        };
+        return map[code] || "Unknown";
+      }
+
+      async function fetchWeatherForDate(dateStr) {
+        // dateStr format: YYYY-MM-DD
+        const lat = 28.7041;
+        const lon = 77.1025;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Network response not ok");
+          const data = await res.json();
+          const daily = data.daily;
+          if (!daily || !daily.time || daily.time.length === 0) {
+            document.getElementById("weatherDesc").textContent = "No data";
+            document.getElementById("weatherTemp").textContent = "";
+            document.getElementById("weatherDate").textContent = dateStr;
+            return;
+          }
+          // single-day arrays
+          const idx = 0;
+          const wcode = daily.weathercode[idx];
+          const tmax = daily.temperature_2m_max[idx];
+          const tmin = daily.temperature_2m_min[idx];
+          document.getElementById("weatherDate").textContent = dateStr;
+          document.getElementById("weatherDesc").textContent =
+            weatherCodeToText(wcode);
+          document.getElementById(
+            "weatherTemp"
+          ).textContent = `High: ${tmax}°C • Low: ${tmin}°C`;
+        } catch (err) {
+          document.getElementById("weatherDesc").textContent =
+            "Error fetching weather";
+          document.getElementById("weatherTemp").textContent = "";
+          document.getElementById("weatherDate").textContent = dateStr;
+          console.error("Weather fetch error:", err);
+        }
+      }
+
+      // ---------- Initialize calendar ----------
+      document.addEventListener("DOMContentLoaded", async function () {
+        const calendarEl = document.getElementById("calendar");
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: "dayGridMonth",
+          height: "auto",
+          selectable: true,
+          editable: true,
+          headerToolbar: false, // we use custom toolbar
+          dayMaxEvents: true,
+          eventColor: "#378006", // fallback
+          eventClick: function (info) {
+            openEventModal(info.event);
+          },
+          dateClick: function (info) {
+            // open event modal and also load weather for clicked date
+            openEventModal(null, info.dateStr);
+            fetchWeatherForDate(info.dateStr);
+          },
+        });
+
+        // add initial event sources
+        calendar.addEventSource({
+          id: sources.personal.id,
+          events: sources.personal.events,
+          color: sources.personal.color,
+        });
+        calendar.addEventSource({
+          id: sources.work.id,
+          events: sources.work.events,
+          color: sources.work.color,
+        });
+
+        // Fetch and add holidays for current year
+        const currentYear = new Date().getFullYear();
+        const holidays = await fetchIndianHolidays(currentYear);
+        calendar.addEventSource({
+          id: sources.holidays.id,
+          events: holidays,
+          color: sources.holidays.color,
+        });
+
+        // When view changes to a new year, fetch holidays for that year
+        calendar.on("datesSet", async function (arg) {
+          const viewYear = arg.view.currentStart.getFullYear();
+          const currentSources = calendar.getEventSources();
+          const holidaySource = currentSources.find(
+            (s) => s.id === sources.holidays.id
+          );
+
+          if (holidaySource) {
+            const existingEvents = holidaySource.internalEventSource.meta;
+            if (!existingEvents || existingEvents.year !== viewYear) {
+              const newHolidays = await fetchIndianHolidays(viewYear);
+              holidaySource.remove();
+              calendar.addEventSource({
+                id: sources.holidays.id,
+                events: newHolidays,
+                color: sources.holidays.color,
+                meta: { year: viewYear },
+              });
+            }
+          }
+        });
+
+        calendar.render();
+
+        // load weather for today's date on initial render
+        const todayStr = new Date().toISOString().slice(0, 10);
+        fetchWeatherForDate(todayStr);
+
+        // Update header text
+        updateHeaderText();
+        calendar.on("datesSet", updateHeaderText);
+
+        // Toolbar buttons wiring (top & sidebar)
+        document
+          .getElementById("btnPrev")
+          .addEventListener("click", () => calendar.prev());
+        document
+          .getElementById("btnNext")
+          .addEventListener("click", () => calendar.next());
+        document
+          .getElementById("btnToday")
+          .addEventListener("click", () => calendar.today());
+        document
+          .getElementById("btnPrevTop")
+          .addEventListener("click", () => calendar.prev());
+        document
+          .getElementById("btnNextTop")
+          .addEventListener("click", () => calendar.next());
+        document
+          .getElementById("btnTodayTop")
+          .addEventListener("click", () => calendar.today());
+
+        // Sidebar view buttons
+        document.querySelectorAll(".view-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            document
+              .querySelectorAll(".view-btn")
+              .forEach((b) => b.classList.remove("active"));
+            this.classList.add("active");
+            const view = this.dataset.view;
+            calendar.changeView(view);
+          });
+        });
+
+        // Toggle event sources when checkboxes changed
+        document.querySelectorAll(".cal-toggle").forEach((el) => {
+          el.addEventListener("change", function () {
+            const cal = this.value;
+            toggleCalendarSource(calendar, cal, this.checked);
+          });
+        });
+
+        // New Event quick button
+        document
+          .getElementById("newEventBtn")
+          .addEventListener("click", () => openEventModal());
+
+        // Top-right new event
+        document
+          .getElementById("newEventBtn")
+          ?.addEventListener("click", () => openEventModal());
+
+        // Modal handling (create/update events)
+        const modalEl = document.getElementById("eventModal");
+        const bsModal = new bootstrap.Modal(modalEl);
+
+        // Form submit
+        document
+          .getElementById("eventForm")
+          .addEventListener("submit", function (e) {
+            e.preventDefault();
+            const id = document.getElementById("evt_id").value;
+            const title = document.getElementById("evt_title").value;
+            const calendarKey = document.getElementById("evt_calendar").value;
+            const start = document.getElementById("evt_start").value;
+            const end = document.getElementById("evt_end").value;
+            const allDay = document.getElementById("evt_all_day").checked;
+            const desc = document.getElementById("evt_desc").value;
+
+            if (id) {
+              // update existing
+              const ev = calendar.getEventById(id);
+              if (ev) {
+                ev.setProp("title", title);
+                ev.setStart(start);
+                ev.setEnd(end);
+                ev.setAllDay(allDay);
+                ev.setExtendedProp("calendar", calendarKey);
+                ev.setProp("classNames", ["cal-" + calendarKey]);
+              }
+            } else {
+              // create new id
+              const newId = "evt-" + String(Date.now());
+              calendar.addEvent({
+                id: newId,
+                title,
+                start,
+                end,
+                allDay,
+                extendedProps: { calendar: calendarKey },
+                classNames: ["cal-" + calendarKey],
+              });
+            }
+
+            bsModal.hide();
+          });
+
+        // Delete event
+        document
+          .getElementById("deleteEventBtn")
+          .addEventListener("click", function () {
+            const id = document.getElementById("evt_id").value;
+            if (id) {
+              const ev = calendar.getEventById(id);
+              if (ev) ev.remove();
+            }
+            bsModal.hide();
+          });
+
+        // Helper: toggle calendar source
+        function toggleCalendarSource(calendarInstance, calKey, show) {
+          const srcId = "src_" + calKey;
+          const existing = calendarInstance
+            .getEventSources()
+            .find(
+              (s) => s.internalEventSource && s.internalEventSource.id === srcId
+            );
+          if (show) {
+            if (!existing) {
+              const def = sources[calKey];
+              calendarInstance.addEventSource({
+                id: def.id,
+                events: def.events,
+                color: def.color,
+              });
+            }
+          } else {
+            if (existing) existing.remove();
+            // Also remove any events that belong to this calendar that might have been added later
+            calendarInstance
+              .getEvents()
+              .filter(
+                (e) => e.extendedProps && e.extendedProps.calendar === calKey
+              )
+              .forEach((e) => e.remove());
+          }
+        }
+
+        // Open modal for new or existing event
+        function openEventModal(event = null, dateStr = null) {
+          document.getElementById("evt_id").value = "";
+          document.getElementById("evt_title").value = "";
+          document.getElementById("evt_start").value = "";
+          document.getElementById("evt_end").value = "";
+          document.getElementById("evt_desc").value = "";
+          document.getElementById("evt_all_day").checked = false;
+          document.getElementById("evt_calendar").value = "personal";
+          document.getElementById("deleteEventBtn").style.display = "none";
+          document.getElementById("modalTitle").textContent = event
+            ? "Edit event"
+            : "Create event";
+
+          if (event) {
+            document.getElementById("evt_id").value = event.id;
+            document.getElementById("evt_title").value = event.title;
+            // Format to local datetime-local input
+            const toLocal = (dt) => {
+              if (!dt) return "";
+              const d = new Date(dt);
+              const pad = (n) => String(n).padStart(2, "0");
+              return (
+                d.getFullYear() +
+                "-" +
+                pad(d.getMonth() + 1) +
+                "-" +
+                pad(d.getDate()) +
+                "T" +
+                pad(d.getHours()) +
+                ":" +
+                pad(d.getMinutes())
+              );
+            };
+            document.getElementById("evt_start").value = toLocal(event.start);
+            document.getElementById("evt_end").value = event.end
+              ? toLocal(event.end)
+              : "";
+            document.getElementById("evt_all_day").checked = !!event.allDay;
+            document.getElementById("evt_calendar").value =
+              (event.extendedProps && event.extendedProps.calendar) ||
+              "personal";
+            document.getElementById("evt_desc").value =
+              event.extendedProps && event.extendedProps.description
+                ? event.extendedProps.description
+                : "";
+            document.getElementById("deleteEventBtn").style.display =
+              "inline-block";
+          } else if (dateStr) {
+            // prefill start with clicked date at 09:00
+            const d = new Date(dateStr);
+            d.setHours(9, 0, 0, 0);
+            const pad = (n) => String(n).padStart(2, "0");
+            document.getElementById("evt_start").value =
+              d.getFullYear() +
+              "-" +
+              pad(d.getMonth() + 1) +
+              "-" +
+              pad(d.getDate()) +
+              "T09:00";
+            const end = new Date(d);
+            end.setHours(10);
+            document.getElementById("evt_end").value =
+              end.getFullYear() +
+              "-" +
+              pad(end.getMonth() + 1) +
+              "-" +
+              pad(end.getDate()) +
+              "T10:00";
+          }
+
+          const bsModal = new bootstrap.Modal(
+            document.getElementById("eventModal")
+          );
+          bsModal.show();
+        }
+
+        // Update header with current view title and range
+        function updateHeaderText(arg) {
+          const view = calendar.view;
+          document.getElementById("currentTitle").textContent =
+            view.title || "";
+          // display range
+          const start = view.currentStart;
+          const end = view.currentEnd;
+          // friendly range: Month name + year, or start - end
+          if (view.type === "dayGridMonth") {
+            // month year already in title
+            document.getElementById("currentRange").textContent = "";
+          } else {
+            document.getElementById("currentRange").textContent =
+              view.title || "";
+          }
+        }
+
+        // Expose calendar globally for debugging (optional)
+        window._calendar = calendar;
+      });
+    </script>
+  </body>
+</html>
