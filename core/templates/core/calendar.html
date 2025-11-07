@@ -1,0 +1,982 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calendar — Core</title>
+
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- FullCalendar CSS (user provided) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css"
+      rel="stylesheet"
+    />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Theme variables */
+      :root {
+        --bg-main: #ffffff;
+        --bg-sidebar: #ffffff;
+        --text-color: #333333;
+        --border-color: #e6e6e6;
+      }
+
+      /* Dark theme */
+      [data-theme="dark"] {
+        --bg-main: #1a1a1a;
+        --bg-sidebar: #242424;
+        --text-color: #e0e0e0;
+        --border-color: #404040;
+      }
+
+      /* Apply theme variables */
+      body {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--bg-main);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .app-main {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+      .sidebar {
+        width: 260px;
+        border-right: 1px solid #e6e6e6;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: var(--bg-sidebar);
+        border-color: var(--border-color);
+      }
+      .calendar-container {
+        flex: 1;
+        padding: 1rem;
+        overflow: auto;
+      }
+      .fc .fc-toolbar-title {
+        font-weight: 600;
+      }
+      .cal-event-color {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      /* small visual for error area (optional) */
+      #calendarError {
+        display: none;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Calendar dark theme adjustments */
+      [data-theme="dark"] .fc {
+        --fc-page-bg-color: var(--bg-main);
+        --fc-border-color: var(--border-color);
+        --fc-neutral-bg-color: #333;
+        --fc-list-event-hover-bg-color: #333;
+      }
+
+      :root {
+        /* Light theme (defaults) */
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --text: #212529;
+        --muted: #6c757d;
+        --border: #e6e6e6;
+        --card: #f8f9fa;
+        --primary: #0d6efd;
+        --fc-event-text: #ffffff;
+        --fc-now-indicator: #ff6b6b;
+      }
+
+      /* Dark theme variables */
+      .dark-mode {
+        --bg: #0b0f14;
+        --surface: #0f1720;
+        --text: #e6eef6;
+        --muted: #9aa6b2;
+        --border: #1f2933;
+        --card: #0b1220;
+        --primary: #4f8cff;
+        --fc-event-text: #000000;
+        --fc-now-indicator: #ff8b8b;
+      }
+
+      /* Apply variables */
+      body {
+        background: var(--bg);
+        color: var(--text);
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+      .sidebar,
+      .navbar,
+      .modal-content {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+      }
+      .cal-event-color {
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06) inset;
+      }
+
+      /* FullCalendar overrides */
+      .fc .fc-toolbar,
+      .fc .fc-toolbar-chunk {
+        background: transparent;
+        color: var(--text);
+      }
+      .fc .fc-button {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .fc .fc-button-primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+      }
+      .fc .fc-button:hover {
+        filter: brightness(1.05);
+      }
+
+      /* Event appearance */
+      .fc .fc-event,
+      .fc .fc-daygrid-event {
+        color: var(--fc-event-text) !important;
+        border: 0 !important;
+      }
+
+      /* Day background and grid */
+      .fc .fc-daygrid-day,
+      .fc .fc-scrollgrid-section-liquid {
+        background: transparent;
+      }
+
+      /* Now indicator */
+      .fc .fc-now-indicator {
+        background: var(--fc-now-indicator) !important;
+      }
+
+      /* Calendar card look */
+      .calendar-container {
+        background: transparent;
+      }
+
+      /* Small UI tweaks for dark */
+      .form-control,
+      .btn,
+      .modal-content {
+        background: var(--card);
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .form-control::placeholder {
+        color: var(--muted);
+        opacity: 0.8;
+      }
+      .alert {
+        background: #2b3640;
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      /* Smooth transition when toggling */
+      .sidebar,
+      .calendar-container,
+      .navbar,
+      .modal-content {
+        transition: background-color 0.18s ease, color 0.18s ease,
+          border-color 0.18s ease;
+      }
+
+      /* Ensure color inputs show properly in dark mode */
+      input[type="color"] {
+        filter: none;
+      }
+
+      /* Mini Calendar Styling */
+      #miniCalendar {
+        font-size: 0.8em;
+      }
+      #miniCalendar .fc-toolbar-title {
+        font-size: 1em;
+      }
+      #miniCalendar .fc-button {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.8em;
+      }
+      #miniCalendar .fc-daygrid-day {
+        min-height: 2em;
+      }
+      #miniCalendar .fc-daygrid-day-events {
+        display: none;
+      }
+      #miniCalendar .fc-header-toolbar {
+        margin-bottom: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar (top) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">My Calendar</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarsExample"
+          aria-controls="navbarsExample"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExample">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <!-- Dark mode toggle button: place inside navbar -->
+            <button
+              id="darkModeToggle"
+              class="btn btn-sm btn-outline-secondary ms-2"
+              type="button"
+              title="Toggle dark mode"
+            >
+              🌙
+            </button>
+          </ul>
+          <!-- Add theme toggle button before search -->
+          <button id="themeToggle" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-moon-fill"></i>
+          </button>
+          <form class="d-flex">
+            <input class="form-control me-2" placeholder="Search" />
+            <button class="btn btn-outline-secondary" type="submit">
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <div class="app-main">
+      <!-- Sidebar -->
+      <aside class="sidebar bg-white">
+        <div class="mb-3">
+          <button class="btn btn-primary w-100" id="btnNewEvent">Create</button>
+        </div>
+
+        <!-- Add Mini Calendar -->
+        <div class="calendar-card mb-3">
+          <div id="miniCalendar"></div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="card-title d-flex justify-content-between">
+              <span>Weather</span>
+              <small class="text-muted">Delhi</small>
+            </h6>
+            <div id="weatherContent">
+              <div id="weatherDate" class="small text-muted mb-1">—</div>
+              <div id="weatherDesc" class="mb-1">
+                Click a date to see weather
+              </div>
+              <div id="weatherTemp" class="small text-muted"></div>
+            </div>
+          </div>
+        </div>
+
+        <h6 class="mb-2">My calendars</h6>
+        <div id="calendarList">
+          <!-- you can show toggles and colors here -->
+          <div class="mb-1">
+            <span class="cal-event-color" style="background: #3788d8"></span>
+            Personal
+          </div>
+          <div class="mb-1">
+            <span class="cal-event-color" style="background: #ff7f50"></span>
+            Work
+          </div>
+        </div>
+
+        <hr />
+        <h6>Quick tips</h6>
+        <small
+          >Drag events to move. Resize to change duration. Click empty space to
+          create.</small
+        >
+      </aside>
+
+      <!-- Calendar -->
+      <main class="calendar-container">
+        <!-- visible error box for user (hidden by default) -->
+        <div id="calendarError" class="alert alert-danger" role="alert"></div>
+        <div id="calendar"></div>
+      </main>
+    </div>
+
+    <!-- Event Modal -->
+    <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="eventForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">Create Event</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="eventId" />
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input id="title" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Start</label>
+              <input
+                id="start"
+                class="form-control"
+                type="datetime-local"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">End</label>
+              <input
+                id="end"
+                class="form-control"
+                type="datetime-local"
+                required
+              />
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" id="allDay" class="form-check-input" />
+              <label class="form-check-label" for="allDay">All day</label>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Color</label>
+              <input
+                id="color"
+                class="form-control"
+                type="color"
+                value="#3788d8"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Location</label>
+              <input id="location" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea
+                id="description"
+                class="form-control"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Recurrence (RRULE)</label>
+              <input
+                id="recurrence"
+                class="form-control"
+                placeholder="e.g. FREQ=WEEKLY;BYDAY=MO,WE,FR"
+              />
+              <small class="form-text text-muted"
+                >Optional — for advanced recurring events store an RRULE
+                string.</small
+              >
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              id="deleteEventBtn"
+              type="button"
+              class="btn btn-danger me-auto d-none"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button id="saveEventBtn" type="submit" class="btn btn-primary">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+    <script>
+      // Theme handling
+      (function () {
+        const THEME_KEY = "calendar_theme";
+        const themeToggle = document.getElementById("themeToggle");
+        const icon = themeToggle.querySelector("i");
+
+        // Check saved theme or system preference
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        const systemDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        const initialTheme = savedTheme || (systemDark ? "dark" : "light");
+
+        function setTheme(theme) {
+          document.documentElement.setAttribute("data-theme", theme);
+          icon.className =
+            theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-fill";
+          localStorage.setItem(THEME_KEY, theme);
+        }
+
+        // Apply initial theme
+        setTheme(initialTheme);
+
+        // Toggle theme on button click
+        themeToggle.addEventListener("click", () => {
+          const currentTheme =
+            document.documentElement.getAttribute("data-theme");
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+          setTheme(newTheme);
+        });
+      })();
+
+      // CSRF helper — send CSRF token in header
+      function getCookie(name) {
+        const v = document.cookie.match(
+          "(^|;)\\s*" + name + "\\s*=\\s*([^;]+)"
+        );
+        return v ? v.pop() : "";
+      }
+      const csrftoken = getCookie("csrftoken");
+
+      // small helper to show an error message on the page and console
+      function showCalendarError(message, details) {
+        const box = document.getElementById("calendarError");
+        box.style.display = "block";
+        box.textContent = message;
+        console.error("Calendar error:", message, details || "");
+      }
+      function clearCalendarError() {
+        const box = document.getElementById("calendarError");
+        box.style.display = "none";
+        box.textContent = "";
+      }
+
+      // Weather fetching function
+      async function fetchWeather(dateStr) {
+        const lat = 28.7041; // Delhi coordinates
+        const lon = 77.1025;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`;
+
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Network response not ok");
+          const data = await res.json();
+
+          const daily = data.daily;
+          if (!daily || !daily.time || daily.time.length === 0) {
+            document.getElementById("weatherDesc").textContent =
+              "No weather data available";
+            document.getElementById("weatherTemp").textContent = "";
+            document.getElementById("weatherDate").textContent = dateStr;
+            return;
+          }
+
+          const weatherCodes = {
+            0: "Clear sky",
+            1: "Mainly clear",
+            2: "Partly cloudy",
+            3: "Overcast",
+            45: "Foggy",
+            51: "Light drizzle",
+            61: "Light rain",
+            63: "Moderate rain",
+            65: "Heavy rain",
+            71: "Snow",
+            95: "Thunderstorm",
+            // Add more codes as needed
+          };
+
+          const idx = 0;
+          const wcode = daily.weathercode[idx];
+          const tmax = daily.temperature_2m_max[idx];
+          const tmin = daily.temperature_2m_min[idx];
+
+          document.getElementById("weatherDate").textContent = dateStr;
+          document.getElementById("weatherDesc").textContent =
+            weatherCodes[wcode] || "Unknown";
+          document.getElementById(
+            "weatherTemp"
+          ).textContent = `High: ${tmax}°C • Low: ${tmin}°C`;
+        } catch (err) {
+          console.error("Weather fetch error:", err);
+          document.getElementById("weatherDesc").textContent =
+            "Error fetching weather";
+          document.getElementById("weatherTemp").textContent = "";
+          document.getElementById("weatherDate").textContent = dateStr;
+        }
+      }
+
+      // Initialize FullCalendar
+      document.addEventListener("DOMContentLoaded", function () {
+        const calendarEl = document.getElementById("calendar");
+        const miniCalendarEl = document.getElementById("miniCalendar");
+
+        // Initialize mini calendar
+        const miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+          initialView: "dayGridMonth",
+          headerToolbar: {
+            left: "prev",
+            center: "title",
+            right: "next",
+          },
+          height: "auto",
+          selectable: false,
+          dateClick: function (info) {
+            // Sync with main calendar
+            calendar.gotoDate(info.date);
+            fetchWeather(info.dateStr);
+          },
+        });
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: "dayGridMonth",
+          headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+          },
+          selectable: true,
+          editable: true, // allow drag/drop + resize
+          navLinks: true,
+          nowIndicator: true,
+          height: "auto",
+
+          /* ---------- improved events loader ---------- */
+          events: function (fetchInfo, successCallback, failureCallback) {
+            clearCalendarError();
+            const url = "{% url 'core:events-list' %}";
+            const q =
+              "?start=" +
+              encodeURIComponent(fetchInfo.startStr) +
+              "&end=" +
+              encodeURIComponent(fetchInfo.endStr);
+            fetch(url + q, { method: "GET", credentials: "same-origin" })
+              .then(async (resp) => {
+                const status = resp.status;
+                const text = await resp.text();
+
+                // try to parse JSON — if fails, we still keep text for debug
+                let data = null;
+                try {
+                  data = JSON.parse(text);
+                } catch (e) {
+                  // not JSON
+                }
+
+                if (!resp.ok) {
+                  // show friendly message + console details
+                  const serverMsg =
+                    (data && (data.error || JSON.stringify(data))) || text;
+                  showCalendarError(
+                    "Failed to load events (HTTP " + status + ")",
+                    serverMsg
+                  );
+                  alert(
+                    "Failed to load events (HTTP " +
+                      status +
+                      ").\n\nOpen the browser console (F12) and network tab for details."
+                  );
+                  failureCallback(new Error("HTTP " + status));
+                  return;
+                }
+
+                if (data && data.error) {
+                  showCalendarError(
+                    "Server error while listing events",
+                    data.error
+                  );
+                  alert("Server error while listing events:\n" + data.error);
+                  failureCallback(new Error(data.error));
+                  return;
+                }
+
+                // FullCalendar expects an array
+                if (!Array.isArray(data)) {
+                  // if server returned { events: [...] } try to adapt
+                  if (data && Array.isArray(data.events)) data = data.events;
+                  else {
+                    showCalendarError("Invalid events response format", text);
+                    alert(
+                      "Invalid events response format. See console for details."
+                    );
+                    failureCallback(new Error("Invalid response format"));
+                    return;
+                  }
+                }
+
+                successCallback(data);
+              })
+              .catch((err) => {
+                showCalendarError(
+                  "Network or parsing error while fetching events",
+                  err
+                );
+                alert(
+                  "Network error when loading events. See console for details."
+                );
+                failureCallback(err);
+              });
+          },
+          /* ---------- end improved events loader ---------- */
+
+          select: function (selectionInfo) {
+            // open modal to create event
+            openEventModal(
+              {
+                start: selectionInfo.startStr,
+                end: selectionInfo.endStr,
+                allDay: selectionInfo.allDay,
+              },
+              true
+            );
+            calendar.unselect();
+          },
+          eventClick: function (info) {
+            // open modal to edit event
+            fetchEventAndOpenModal(info.event.id);
+          },
+          eventDrop: function (info) {
+            // event moved (drag/drop)
+            updateEventTimes(info.event);
+          },
+          eventResize: function (info) {
+            updateEventTimes(info.event);
+          },
+          dateClick: function (info) {
+            fetchWeather(info.dateStr);
+          },
+        });
+
+        calendar.render();
+        miniCalendar.render();
+
+        // New event button
+        const btnNew = document.getElementById("btnNewEvent");
+        btnNew.addEventListener("click", function () {
+          openEventModal({}, true);
+        });
+
+        // Modal and form handling
+        const modalEl = document.getElementById("eventModal");
+        const bsModal = new bootstrap.Modal(modalEl);
+        const form = document.getElementById("eventForm");
+        const deleteBtn = document.getElementById("deleteEventBtn");
+
+        function isoLocalToInputIso(isoStr) {
+          if (!isoStr) return "";
+          // convert ISO to local input format as yyyy-mm-ddThh:mm
+          const d = new Date(isoStr);
+          const tzOffset = d.getTimezoneOffset() * 60000;
+          const local = new Date(d.getTime() - tzOffset);
+          return local.toISOString().slice(0, 16);
+        }
+
+        function inputToIsoLocal(inputValue) {
+          if (!inputValue) return null;
+          // inputValue is like "2025-11-07T18:30"
+          const d = new Date(inputValue);
+          return d.toISOString();
+        }
+
+        window.openEventModal = function (eventData = {}, isCreate = false) {
+          document.getElementById("modalTitle").textContent = isCreate
+            ? "Create Event"
+            : "Edit Event";
+          deleteBtn.classList.toggle("d-none", isCreate);
+
+          document.getElementById("eventId").value = eventData.id || "";
+          document.getElementById("title").value = eventData.title || "";
+          document.getElementById("start").value = eventData.start
+            ? isoLocalToInputIso(eventData.start)
+            : "";
+          document.getElementById("end").value = eventData.end
+            ? isoLocalToInputIso(eventData.end)
+            : "";
+          document.getElementById("allDay").checked = !!eventData.allDay;
+          document.getElementById("color").value = eventData.color || "#3788d8";
+          document.getElementById("location").value = eventData.location || "";
+          document.getElementById("description").value =
+            eventData.description || "";
+          document.getElementById("recurrence").value =
+            eventData.recurrence || "";
+
+          bsModal.show();
+        };
+
+        async function fetchEventAndOpenModal(id) {
+          try {
+            // We'll try a single-event GET first (useful if you implement GET on /events/<id>/)
+            const singleUrl = `/events/${id}/`;
+            let resp = await fetch(singleUrl, {
+              method: "GET",
+              credentials: "same-origin",
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              openEventModal(data, false);
+              return;
+            }
+            // If single GET not implemented (404/405), fallback to range query
+            const today = new Date();
+            const start = new Date(today.getFullYear() - 1, 0, 1).toISOString();
+            const end = new Date(today.getFullYear() + 1, 11, 31).toISOString();
+
+            resp = await fetch(
+              "{% url 'core:events-list' %}?start=" +
+                encodeURIComponent(start) +
+                "&end=" +
+                encodeURIComponent(end),
+              { credentials: "same-origin" }
+            );
+
+            if (!resp.ok) {
+              const text = await resp.text();
+              showCalendarError("Failed to load events for edit", {
+                status: resp.status,
+                body: text,
+              });
+              alert("Failed to fetch event details. See console for details.");
+              return;
+            }
+
+            const events = await resp.json();
+            const ev = events.find((e) => String(e.id) === String(id));
+            if (!ev) {
+              alert("Event not found");
+              return;
+            }
+            openEventModal(ev, false);
+          } catch (err) {
+            showCalendarError("Error fetching event details", err);
+            alert("Error fetching event details. See console.");
+          }
+        }
+
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const id = document.getElementById("eventId").value;
+          const payload = {
+            title: document.getElementById("title").value,
+            start: inputToIsoLocal(document.getElementById("start").value),
+            end: inputToIsoLocal(document.getElementById("end").value),
+            allDay: document.getElementById("allDay").checked,
+            color: document.getElementById("color").value,
+            location: document.getElementById("location").value,
+            description: document.getElementById("description").value,
+            recurrence: document.getElementById("recurrence").value,
+          };
+
+          if (!payload.start || !payload.end) {
+            alert("Start and End required");
+            return;
+          }
+
+          try {
+            if (!id) {
+              // create
+              const resp = await fetch("{% url 'core:events-create' %}", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": csrftoken,
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+              });
+              if (!resp.ok) {
+                const text = await resp.text();
+                showCalendarError("Create failed", {
+                  status: resp.status,
+                  body: text,
+                });
+                alert("Create failed. See console.");
+                return;
+              }
+              await resp.json();
+              calendar.refetchEvents();
+            } else {
+              // update
+              const resp = await fetch(`/events/${id}/`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": csrftoken,
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+              });
+              if (!resp.ok) {
+                const text = await resp.text();
+                showCalendarError("Update failed", {
+                  status: resp.status,
+                  body: text,
+                });
+                alert("Update failed. See console.");
+                return;
+              }
+              await resp.json();
+              calendar.refetchEvents();
+            }
+            bsModal.hide();
+          } catch (err) {
+            showCalendarError("Network error saving event", err);
+            alert("Network error saving event. See console.");
+          }
+        });
+
+        deleteBtn.addEventListener("click", async function () {
+          const id = document.getElementById("eventId").value;
+          if (!id) return;
+          if (!confirm("Delete this event?")) return;
+          try {
+            const resp = await fetch(`/events/${id}/delete/`, {
+              method: "DELETE",
+              headers: { "X-CSRFToken": csrftoken },
+              credentials: "same-origin",
+            });
+            if (!resp.ok) {
+              const text = await resp.text();
+              showCalendarError("Delete failed", {
+                status: resp.status,
+                body: text,
+              });
+              alert("Delete failed. See console.");
+              return;
+            }
+            calendar.refetchEvents();
+            bsModal.hide();
+          } catch (err) {
+            showCalendarError("Network error deleting event", err);
+            alert("Network error deleting event. See console.");
+          }
+        });
+
+        async function updateEventTimes(event) {
+          // when drag/drop or resize occurs, update backend with new start/end
+          try {
+            // event.end may be null for single-day events — ensure we send a valid ISO
+            const startIso = event.start ? event.start.toISOString() : null;
+            const endIso = event.end ? event.end.toISOString() : startIso;
+            const payload = {
+              start: startIso,
+              end: endIso,
+              allDay: !!event.allDay,
+            };
+            const resp = await fetch(`/events/${event.id}/`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken,
+              },
+              credentials: "same-origin",
+              body: JSON.stringify(payload),
+            });
+            if (!resp.ok) {
+              const text = await resp.text();
+              showCalendarError("Could not update event", {
+                status: resp.status,
+                body: text,
+              });
+              alert("Could not update event. See console.");
+              // try revert if FullCalendar gives revert method
+              if (typeof event.revert === "function") event.revert();
+            } else {
+              calendar.refetchEvents();
+            }
+          } catch (err) {
+            showCalendarError("Network error updating event", err);
+            alert("Network error updating event. See console.");
+            if (typeof event.revert === "function") event.revert();
+          }
+        }
+      });
+
+      (function () {
+        const STORAGE_KEY = "core_calendar_darkmode";
+        const toggleBtn = document.getElementById("darkModeToggle");
+        const root = document.documentElement;
+        // helper: apply/remove class on <html> or <body> — we used body in CSS, so use document.body
+        function setDarkMode(on, persist = true) {
+          if (on) document.body.classList.add("dark-mode");
+          else document.body.classList.remove("dark-mode");
+          if (persist) localStorage.setItem(STORAGE_KEY, on ? "1" : "0");
+          // update icon
+          if (toggleBtn) toggleBtn.textContent = on ? "☀️" : "🌙";
+        }
+
+        // read preference
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === null) {
+          // respect OS preference initially
+          const prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          setDarkMode(prefersDark, false);
+        } else {
+          setDarkMode(saved === "1", false);
+        }
+
+        // wire button
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", (e) => {
+            const isDark = document.body.classList.contains("dark-mode");
+            setDarkMode(!isDark, true);
+          });
+        }
+
+        // optional: listen to OS preference changes (if user hasn't explicitly chosen)
+        window.matchMedia &&
+          window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", (e) => {
+              const savedNow = localStorage.getItem(STORAGE_KEY);
+              if (savedNow === null) {
+                setDarkMode(e.matches, false);
+              }
+            });
+      })();
+    </script>
+  </body>
+</html>

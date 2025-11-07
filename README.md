@@ -1,144 +1,148 @@
-# Calendar Application
+# 📅 Google-like Calendar (Django + FullCalendar)
 
-A Google Calendar-inspired web application built with Django, Bootstrap 5, and FullCalendar.
+[![Django](https://img.shields.io/badge/Django-5.2.8-%230092bf)](https://www.djangoproject.com/)
+[![FullCalendar](https://img.shields.io/badge/FullCalendar-6.x-orange)](https://fullcalendar.io/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-blue)](https://getbootstrap.com/)
 
-## Setup and Installation
+A Google-Calendar inspired web app built with Django (backend), FullCalendar (frontend), and Bootstrap 5 for UI. This repo demonstrates event CRUD, multi-calendar sources, holiday import (Nager.Date), and weather lookup (Open-Meteo by default).
 
-1. Clone the repository
-2. Install Python dependencies:
+Quick links
+
+- Live UI templates: core/templates/core/calendar.html and core/templates/test.html
+- Backend endpoints: core.views (events_list, event_create, event_update, event_delete)
+- Settings: googleCalender/settings.py
+
+Why this project
+
+- Lightweight calendar demo suitable for learning integrations: calendars, weather, public holidays.
+- Minimal backend API to serve FullCalendar.
+- Extensible: add authentication, recurring events, external calendar sync.
+
+Getting started (local)
+
+1. Clone:
 
 ```bash
+git clone <repo>
+cd c:\Users\Yamraj\Desktop\pcode\googleCalender
+```
+
+2. Create & activate virtualenv, install Django (project uses only Django by default):
+
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
 pip install django
 ```
 
-3. Run migrations:
+3. Apply migrations and create superuser:
 
 ```bash
 python manage.py migrate
+python manage.py createsuperuser
+# supply username/password — this user will appear in templates if you log in
 ```
 
-4. Start development server:
+4. Run dev server:
 
 ```bash
 python manage.py runserver
+# Open http://127.0.0.1:8000/
 ```
 
-5. Visit http://localhost:8000 in your browser
+Environment & configuration
 
-## Architecture & Technology Choices
+- Database: settings.py is configured for PostgreSQL by default (DATABASES). For quick testing you can switch to SQLite by replacing DATABASES with the commented SQLite block.
+- Timezone: TIME_ZONE is `UTC` in settings.py. Adjust if needed.
+- Weather: code uses Open-Meteo (no API key) and default latitude/longitude:
+  - DEFAULT_LAT = 28.7041 (Delhi)
+  - DEFAULT_LON = 77.1025
+    Change in templates/scripts where these constants appear if you want other defaults.
+- Holidays: Nager.Date public holidays API is used:
+  - URL: https://date.nager.at/api/v3/PublicHolidays/{year}/IN
+    No API key required.
 
-### Frontend Stack
+Key files & responsibilities
 
-- **Bootstrap 5**: For responsive UI components and layout
-- **FullCalendar 6.x**: Professional-grade calendar library
-- **Vanilla JavaScript**: No additional framework dependencies
-- **Bootstrap Icons**: For consistent iconography
+- core/views.py — Django views exposing JSON endpoints:
 
-### Backend Stack
+  - events_list: GET events between start/end query parameters
+  - event_create: POST to create events
+  - event_update: PUT/PATCH to update events
+  - event_delete: DELETE to remove events
+    These endpoints are consumed by the frontend FullCalendar instance.
 
-- **Django**: Python web framework for future API integration
-- **SQLite**: Default database (can be scaled to PostgreSQL)
+- core/templates/core/calendar.html — main UI for authenticated usage:
 
-### External APIs Integrated
+  - Mini-calendar in the sidebar (FullCalendar instance)
+  - Main calendar (FullCalendar) with event CRUD modal
+  - Weather card and holiday logic
+  - Theme/dark-mode toggles
 
-- **Open-Meteo API**: Weather forecasting
-- **Nager.Date API**: Public holidays data
+- core/templates/test.html — alternate demo template (works standalone in templates directory)
 
-## Business Logic & Edge Cases
+- googleCalender/settings.py — Django settings (DB, apps, middleware, templates). Update DB credentials here for production.
 
-### Calendar Events
+Icons and visuals
 
-- **Event Types**: Personal, Work, and Holidays
-- **Event Properties**:
-  - Title, Start/End times
-  - All-day flag
-  - Calendar category
-  - Description
-  - Unique ID generation
+- Bootstrap Icons are already included in templates via CDN:
 
-### Edge Cases Handled
+```html
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
+```
 
-1. **Date Handling**
+- Use icons in templates:
 
-   - Timezone-aware datetime handling
-   - All-day vs timed events
-   - Cross-day events
+```html
+<i class="bi bi-person-circle"></i>
+<!-- person icon -->
+<i class="bi bi-calendar-day"></i>
+<!-- calendar icon -->
+```
 
-2. **Event Management**
+- You can also add emoji inline for quick visual cues (used for holidays: "🎉").
 
-   - Duplicate event prevention
-   - Invalid date range validation
-   - Event source toggling
+How login/superuser display works
 
-3. **Holiday Integration**
+- Templates include Django's `user` context (context processor enabled in settings). After you create a superuser (createsuperuser) and log in, `{{ user.username }}` will show in the navbar where templates render user info.
+- If you don't have login flow yet, you can log in via `/admin/` to create sessions, or add simple links to Django auth views:
+  - `path('accounts/login/', django.contrib.auth.views.LoginView.as_view(), name='login')`
 
-   - Year boundary handling
-   - Cached holiday data
-   - API failure fallback
+Tips & troubleshooting
 
-4. **Weather Integration**
-   - Location-based weather
-   - Future date forecasts
-   - API error handling
+- Events disappear after custom JS changes: ensure you do not replace FullCalendar's event sources unintentionally — prefer addEventSource/remove or calendar.addEvent rather than calendar.render() multiple times.
 
-## Animations & Interactions
+- Weather: Open-Meteo provides forecast per-day; ensure date string format is YYYY-MM-DD.
 
-### UI Components
+Development notes (implementation highlights)
 
-1. **Theme Switching**
+- Frontend uses two FullCalendar instances (mini + main) and synchronizes navigation.
+- Weather uses Open-Meteo for daily high/low + basic weather code mapping.
+- Holidays are fetched from Nager.Date per-year and added as all-day, non-editable events.
+- Events are persisted via POST/PUT/DELETE against Django views returning JSON.
 
-   - Smooth dark/light mode transition
-   - Persistent theme preference
-   - System theme detection
+Future improvements
 
-2. **Calendar Interactions**
+- Add full Django auth views and require login for calendar manipulation.
+- Persist calendar sources per-user and add sharing/permissions.
+- Implement recurring events parsing (rrule) and conflict detection.
+- Add server-side caching for holiday API responses.
+- Integrate Google Calendar / Microsoft sync.
 
-   - Drag-and-drop event moving
-   - Event resizing
-   - View transitions
-   - Modal animations
+Contribution
 
-3. **Responsive Design**
-   - Sidebar collapse on mobile
-   - Touch-friendly controls
-   - Adaptive layout
+1. Fork
+2. Create branch
+3. Open PR with tests/description
 
-## Future Enhancements
+License
 
-1. **Feature Additions**
+- MIT
 
-   - Event recurrence patterns
-   - Guest invitations
-   - Email notifications
-   - Calendar sharing
-   - Event attachments
-   - Custom calendar colors
+Contact
 
-2. **Technical Improvements**
-
-   - Backend API implementation
-   - Real-time updates (WebSocket)
-   - Event caching
-   - Offline support
-   - Multi-language support
-   - Calendar import/export
-
-3. **Integration Options**
-
-   - Google Calendar sync
-   - Microsoft Outlook sync
-   - Task management
-   - Meeting room booking
-   - Video conferencing
-
-4. **Performance Optimizations**
-   - Event lazy loading
-   - Image optimization
-   - Network caching
-   - Bundle size reduction
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Submit pull request
+- Project owner: local developer (this is a demo local project)
