@@ -34,6 +34,7 @@ def event_to_dict(ev: Event):
         "color": ev.color,
         "location": ev.location,
         "recurrence": ev.recurrence,
+        "status": ev.status,
     }
 
 
@@ -106,6 +107,7 @@ def event_create(request):
     color = payload.get("color", "#3788d8")
     location = payload.get("location", "")
     recurrence = payload.get("recurrence", "")
+    status = payload.get("status", "Personal")
 
     # parse datetimes
     start = parse_datetime(start_raw) if start_raw else None
@@ -137,6 +139,7 @@ def event_create(request):
         recurrence=recurrence,
         created_by=request.user if getattr(
             request, "user", None) and request.user.is_authenticated else None,
+        status=status,
     )
     return JsonResponse(event_to_dict(ev), status=201)
 

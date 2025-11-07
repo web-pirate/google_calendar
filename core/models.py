@@ -21,6 +21,13 @@ class Event(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    STATUS_CHOICES = [
+        ("Personal", "Personal"),
+        ("Work", "Work"),
+        ("Birthday", "Birthday"),
+    ]
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default="Personal")
 
     def __str__(self):
         return f"{self.title} ({self.start} - {self.end})"
